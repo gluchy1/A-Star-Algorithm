@@ -1,5 +1,5 @@
 
-# A* Pathfinding Visualization Project
+# A* (A-Star) Pathfinding Algorithm
 
 ### main.py
 
