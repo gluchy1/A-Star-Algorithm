@@ -26,4 +26,4 @@ with open("array.txt", "w") as file:
     for row in array:
         file.write(','.join(map(str, row)) + '\n')
 
-print("Tablica została zapisana do pliku array.txt.")
+print("New Array generated")

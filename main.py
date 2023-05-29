@@ -168,3 +168,4 @@ def main():
     animApp.mainloop()
 if __name__ == "__main__":
     main()
+    print("A-Star-Algorithm initiated")
