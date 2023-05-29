@@ -1,7 +1,7 @@
 
 # A* Pathfinding Visualization Project
 
-### 1. main.py
+### main.py
 
 This is the main python script of the project.
 It features the implementation of the A* Pathfinding Algorithm
@@ -17,11 +17,11 @@ The `astaralgorithm` class provides the following functionalities:
 -   Uses the Turtle Graphics for grid and path visualization.
 -   Allows for the selection of the grid file.
 
-### 2. array.txt
+### array.txt
 
 Simple Grid used by 'class astaralgorithm'
 
-### 3. array_randomizer.py
+### array_randomizer.py
 
 Python script fills a predefined grid with random `0` and `1` values and then saves the result to the `array.txt` file. The `0,0` and the `len(array)-1, len(array[i])-1` grid cells are guaranteed to be open to allow for a possible path from the start to the goal.
 
