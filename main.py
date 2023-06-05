@@ -5,45 +5,20 @@ import tkinter
 import turtle
 
 class astaralgorithm(tkinter.Frame):
-    def __init__(self, master=None):
+
+    def __init__(self, master=None, start_point=(0, 0)):
         super().__init__(master)
         self.pack()
         self.build_window()
         self.running = False
+        self.start_point = start_point
 
     def build_window(self):
-
         self.master.title("A Star Pathfinding Algorithm visualisation using Tkinter")
         menu_bar = tkinter.Menu(self.master)
         file_menu = tkinter.Menu(menu_bar, tearoff=0)
 
-        def run_animation():
-            if self.running:
-                return
-            try:
-                self.running = True
-                screen = self.theTurtle.getscreen()
-                screen.clear()
-                screen.tracer(0)
-                screen.setworldcoordinates(0, 800, 1300, 0)
-                self.screen = screen
-                maze = np.loadtxt(self.filename.get(), delimiter=',')
-                start = (0, 0)
-                goal = (maze.shape[0] - 1, maze.shape[1] - 1)
-                path, visited_nodes = self.a_star(maze, start, goal)
-                self.visualize(maze, visited_nodes, path)
-                self.running = False
-            except Exception as ex:
-                tkinter.messagebox.showwarning("Alert", str(ex))
-                tb = sys.exc_info()[2]
-                self.running = False
-                raise ex
-
-        def stop_animation():
-            self.running = False
-
         file_menu.add_command(label="Exit", command=self.master.quit)
-
         menu_bar.add_cascade(label="File", menu=file_menu)
 
         self.master.config(menu=menu_bar)
@@ -66,11 +41,49 @@ class astaralgorithm(tkinter.Frame):
         file_entry_box = tkinter.Entry(side_bar, textvariable=self.filename)
         file_entry_box.pack()
 
-        start_button = tkinter.Button(side_bar, text="Start", command=run_animation)
+        start_button = tkinter.Button(side_bar, text="Start", command=self.run_animation)
         start_button.pack()
 
-        stop_button = tkinter.Button(side_bar, text="Stop", command=stop_animation)
-        stop_button.pack()
+        # stop_button = tkinter.Button(side_bar, text="Stop", command=self.stop_animation)
+        # stop_button.pack()
+
+    def run_animation(self):
+        if self.running:
+            return
+        try:
+            self.running = True
+            self.screen = self.setup_screen()
+            maze = self.load_maze()
+            start, goal = self.calculate_start_goal(maze)
+            path, visited_nodes = self.a_star(maze, start, goal)
+            self.visualize(maze, visited_nodes, path)
+            self.running = False
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            self.running = False
+
+    # def stop_animation(self):
+    #     self.running = False
+
+    def setup_screen(self):
+        screen = self.theTurtle.getscreen()
+        screen.clear()
+        screen.tracer(0)
+        screen.setworldcoordinates(0, 800, 1300, 0)
+        return screen
+
+    def load_maze(self):
+        try:
+            maze = np.loadtxt(self.filename.get(), delimiter=',')
+        except IOError as e:
+            print("Unable to open file", e)
+            sys.exit(1)
+        return maze
+
+    def calculate_start_goal(self, maze):
+        start = self.start_point
+        goal = (maze.shape[0] - 1, maze.shape[1] - 1)
+        return start, goal
 
     def heuristic(self, a, b):
         return np.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
@@ -83,11 +96,14 @@ class astaralgorithm(tkinter.Frame):
         fscore = {start: self.heuristic(start, goal)}
         oheap = []
         visited_nodes = []
+        oheap_set = set()
 
         heapq.heappush(oheap, (fscore[start], start))
+        oheap_set.add(start)
 
         while oheap:
             current = heapq.heappop(oheap)[1]
+            oheap_set.remove(current)
 
             if current == goal:
                 data = []
@@ -99,24 +115,22 @@ class astaralgorithm(tkinter.Frame):
             close_set.add(current)
             for i, j in neighbors:
                 neighbor = current[0] + i, current[1] + j
-                tentative_g_score = gscore[current] + self.heuristic(current, neighbor)
-                if 0 <= neighbor[0] < array.shape[0]:
-                    if 0 <= neighbor[1] < array.shape[1]:
-                        if array[neighbor[0]][neighbor[1]] == 1:
-                            continue
-                    else:
+                if 0 <= neighbor[0] < array.shape[0] and 0 <= neighbor[1] < array.shape[1]:
+                    if array[neighbor[0]][neighbor[1]] == 1:
                         continue
+                    tentative_g_score = gscore[current] + self.heuristic(current, neighbor)
                 else:
                     continue
 
                 if neighbor in close_set and tentative_g_score >= gscore.get(neighbor, 0):
                     continue
 
-                if tentative_g_score < gscore.get(neighbor, 0) or neighbor not in [i[1] for i in oheap]:
+                if tentative_g_score < gscore.get(neighbor, 0) or neighbor not in oheap_set:
                     came_from[neighbor] = current
                     gscore[neighbor] = tentative_g_score
                     fscore[neighbor] = tentative_g_score + self.heuristic(neighbor, goal)
                     heapq.heappush(oheap, (fscore[neighbor], neighbor))
+                    oheap_set.add(neighbor)
                     visited_nodes.append(neighbor)
 
         return False, visited_nodes
@@ -138,7 +152,7 @@ class astaralgorithm(tkinter.Frame):
                 self.theTurtle.goto(col * cell_size, row * cell_size)
                 self.theTurtle.pendown()
                 self.theTurtle.setheading(0)
-                self.theTurtle.fillcolor("white" if maze[row, col] == 0 else "black")
+                self.theTurtle.fillcolor("lightgray" if maze[row, col] == 0 else "black")
                 self.theTurtle.begin_fill()
                 for _ in range(4):
                     self.theTurtle.forward(cell_size)
@@ -156,16 +170,24 @@ class astaralgorithm(tkinter.Frame):
                 row, col = node
                 self.theTurtle.goto(col * cell_size + cell_size // 2, row * cell_size + cell_size // 2)
                 self.theTurtle.dot(cell_size / 4, 'red')
-        self.theTurtle.goto(0, 0)
+
+        self.theTurtle.goto(cell_size // 2, cell_size // 2)
         self.theTurtle.dot(cell_size / 2, 'green')
-        self.theTurtle.goto((maze.shape[1] - 1) * cell_size, (maze.shape[0] - 1) * cell_size)
+        self.theTurtle.write("Start", align="center", font=("Arial", 12, "normal"))
+
+        self.theTurtle.goto((maze.shape[1] - 0.5) * cell_size, (maze.shape[0] - 0.5) * cell_size)
         self.theTurtle.dot(cell_size / 2, 'purple')
+        self.theTurtle.write("End", align="center", font=("Arial", 12, "normal"))
+
         turtle_screen.update()
+
 
 def main():
     root = tkinter.Tk()
     animApp = astaralgorithm(root)
     animApp.mainloop()
+
+
 if __name__ == "__main__":
     main()
     print("A-Star-Algorithm initiated")

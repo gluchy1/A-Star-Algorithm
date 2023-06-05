@@ -1,26 +1,30 @@
-import random
+try:
+    import random
+except:
+    pass
 
-array = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-]
+array = [[1]*10 for _ in range(10)]
+path = [(0, 0)]
+while path[-1] != (9, 9):
+    i, j = path[-1]
+    if i == 9:
+        path.append((i, j+1))
+    elif j == 9:
+        path.append((i+1, j))
+    elif random.random() < 0.5:
+        path.append((i, j+1))
+    else:
+        path.append((i+1, j))
+
+for i, j in path:
+    array[i][j] = 0
 
 for i in range(len(array)):
     for j in range(len(array[i])):
-        if (i == 0 and j == len(array[i]) - 1) or (i == len(array) - 1 and j == 0):
+        if (i, j) in path:
             continue
-        if (i, j) not in [(0, 0), (0, len(array[i]) - 1), (len(array) - 1, 0), (len(array) - 1, len(array[i]) - 1)]:
-            if array[i][j] == 0:
-                if random.random() < 0.5:
-                    array[i][j] = 1
+        if random.random() < 0.5:
+            array[i][j] = 0
 
 with open("array.txt", "w") as file:
     for row in array:
