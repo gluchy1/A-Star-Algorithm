@@ -1,4 +1,4 @@
-import sys
+import os
 import numpy as np
 import heapq
 import tkinter
@@ -44,9 +44,6 @@ class astaralgorithm(tkinter.Frame):
         start_button = tkinter.Button(side_bar, text="Start", command=self.run_animation)
         start_button.pack()
 
-        # stop_button = tkinter.Button(side_bar, text="Stop", command=self.stop_animation)
-        # stop_button.pack()
-
     def run_animation(self):
         if self.running:
             return
@@ -54,6 +51,8 @@ class astaralgorithm(tkinter.Frame):
             self.running = True
             self.screen = self.setup_screen()
             maze = self.load_maze()
+            if maze is None:
+                raise Exception("Could not load maze.")
             start, goal = self.calculate_start_goal(maze)
             path, visited_nodes = self.a_star(maze, start, goal)
             self.visualize(maze, visited_nodes, path)
@@ -61,9 +60,6 @@ class astaralgorithm(tkinter.Frame):
         except Exception as e:
             print(f"Error occurred: {e}")
             self.running = False
-
-    # def stop_animation(self):
-    #     self.running = False
 
     def setup_screen(self):
         screen = self.theTurtle.getscreen()
@@ -73,12 +69,20 @@ class astaralgorithm(tkinter.Frame):
         return screen
 
     def load_maze(self):
+        filename = self.filename.get()
+        if not os.path.isfile(filename):
+            print(f"File {filename} does not exist.")
+            return None
+        if not os.access(filename, os.R_OK):
+            print(f"File {filename} is not readable.")
+            return None
         try:
-            maze = np.loadtxt(self.filename.get(), delimiter=',')
+            maze = np.loadtxt(filename, delimiter=',')
         except IOError as e:
             print("Unable to open file", e)
-            sys.exit(1)
+            return None
         return maze
+
 
     def calculate_start_goal(self, maze):
         start = self.start_point
@@ -110,28 +114,26 @@ class astaralgorithm(tkinter.Frame):
                 while current in came_from:
                     data.append(current)
                     current = came_from[current]
-                return data, visited_nodes
+                return data[::-1], visited_nodes
 
             close_set.add(current)
             for i, j in neighbors:
                 neighbor = current[0] + i, current[1] + j
                 if 0 <= neighbor[0] < array.shape[0] and 0 <= neighbor[1] < array.shape[1]:
-                    if array[neighbor[0]][neighbor[1]] == 1:
+                    if array[neighbor[0]][neighbor[1]] == 1:  # Treat 1 as an obstacle
                         continue
                     tentative_g_score = gscore[current] + self.heuristic(current, neighbor)
                 else:
                     continue
 
-                if neighbor in close_set and tentative_g_score >= gscore.get(neighbor, 0):
-                    continue
-
-                if tentative_g_score < gscore.get(neighbor, 0) or neighbor not in oheap_set:
+                if neighbor not in gscore or tentative_g_score < gscore[neighbor]:
                     came_from[neighbor] = current
                     gscore[neighbor] = tentative_g_score
                     fscore[neighbor] = tentative_g_score + self.heuristic(neighbor, goal)
-                    heapq.heappush(oheap, (fscore[neighbor], neighbor))
-                    oheap_set.add(neighbor)
-                    visited_nodes.append(neighbor)
+                    if neighbor not in oheap_set:
+                        heapq.heappush(oheap, (fscore[neighbor], neighbor))
+                        oheap_set.add(neighbor)
+                        visited_nodes.append(neighbor)
 
         return False, visited_nodes
 
@@ -152,7 +154,8 @@ class astaralgorithm(tkinter.Frame):
                 self.theTurtle.goto(col * cell_size, row * cell_size)
                 self.theTurtle.pendown()
                 self.theTurtle.setheading(0)
-                self.theTurtle.fillcolor("lightgray" if maze[row, col] == 0 else "black")
+                self.theTurtle.fillcolor(
+                    "black" if maze[row, col] == 1 else "lightgray")
                 self.theTurtle.begin_fill()
                 for _ in range(4):
                     self.theTurtle.forward(cell_size)
@@ -160,12 +163,26 @@ class astaralgorithm(tkinter.Frame):
                 self.theTurtle.end_fill()
                 self.theTurtle.penup()
 
+        # for row in range(maze.shape[0]):
+        #     for col in range(maze.shape[1]):
+        #         self.theTurtle.goto(col * cell_size, row * cell_size)
+        #         self.theTurtle.pendown()
+        #         self.theTurtle.setheading(0)
+        #         self.theTurtle.fillcolor("lightgray" if maze[row, col] == 0 else "black")
+        #         self.theTurtle.begin_fill()
+        #         for _ in range(4):
+        #             self.theTurtle.forward(cell_size)
+        #             self.theTurtle.right(90)
+        #         self.theTurtle.end_fill()
+        #         self.theTurtle.penup()
+
         for node in visited_nodes:
             row, col = node
             self.theTurtle.goto(col * cell_size + cell_size // 2, row * cell_size + cell_size // 2)
             self.theTurtle.dot(cell_size / 4, 'blue')
 
         if path:
+            path = path[::-1]
             for node in path:
                 row, col = node
                 self.theTurtle.goto(col * cell_size + cell_size // 2, row * cell_size + cell_size // 2)
