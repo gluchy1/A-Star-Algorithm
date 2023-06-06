@@ -1,6 +1,8 @@
 
 # A* (A-Star) Pathfinding Algorithm
 
+` a lot to be learned, code is buggy `
+
 ### main.py
 
 Implementation of the A* Pathfinding Algorithm
