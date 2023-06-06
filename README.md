@@ -1,7 +1,7 @@
 
 # A* (A-Star) Pathfinding Algorithm
 
-> I got still a lot to learn, there is a bug that makes the circles appear on the black boxes, which indicates the wall and shouldn't be considered a path by this A* algorithm. Maybe a different solution to visualisation is necessary, or maybe I should scrap the current one.
+> I got still a lot to learn, there is a bug that makes the circles appear on the black boxes, which indicates the wall and shouldn't be considered a path by this A* algorithm. Maybe a different solution to visualisation is necessary, or maybe I should scrap the current one.  
 (Made thanks to the tutorial by TechWithTim)[https://www.youtube.com/watch?v=JtiK0DOeI4A&ab_channel=TechWithTim]
 
 ### main.py
