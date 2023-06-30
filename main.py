@@ -3,6 +3,15 @@ import numpy as np
 import heapq
 import tkinter
 import turtle
+import array_randomizer
+
+def newarray():
+    if not newarray.has_run:
+        newarray.has_run = True
+        array_randomizer.array_randomizer()
+    else:
+        raise RuntimeError
+
 
 class astaralgorithm(tkinter.Frame):
 
@@ -33,6 +42,7 @@ class astaralgorithm(tkinter.Frame):
         side_bar.pack(side=tkinter.RIGHT, fill=tkinter.BOTH)
 
         self.filename = tkinter.StringVar()
+        # with_item::("array.txt")[self.filename.set]
         self.filename.set("array.txt")
 
         select_label = tkinter.Label(side_bar, text="Select File")
@@ -65,7 +75,7 @@ class astaralgorithm(tkinter.Frame):
         screen = self.theTurtle.getscreen()
         screen.clear()
         screen.tracer(0)
-        screen.setworldcoordinates(0, 800, 1300, 0)
+        screen.setworldcoordinates(0, 800, 800, 0)
         return screen
 
     def load_maze(self):
@@ -82,7 +92,6 @@ class astaralgorithm(tkinter.Frame):
             print("Unable to open file", e)
             return None
         return maze
-
 
     def calculate_start_goal(self, maze):
         start = self.start_point
@@ -127,7 +136,8 @@ class astaralgorithm(tkinter.Frame):
                     continue
 
                 if neighbor not in gscore or tentative_g_score < gscore[neighbor]:
-                    came_from[neighbor] = current
+                    if array[neighbor[0]][neighbor[1]] == 0:  # Only add the neighbor to the path if it is not an obstacle
+                        came_from[neighbor] = current
                     gscore[neighbor] = tentative_g_score
                     fscore[neighbor] = tentative_g_score + self.heuristic(neighbor, goal)
                     if neighbor not in oheap_set:
@@ -140,7 +150,7 @@ class astaralgorithm(tkinter.Frame):
     def visualize(self, maze, visited_nodes, path):
         canvas_width = 800
         canvas_height = 800
-        cell_size = min(canvas_width // maze.shape[1], canvas_height // maze.shape[0])
+        cell_size = min(canvas_width // maze.shape[0], canvas_height // maze.shape[1])  # Change here
 
         turtle_screen = self.theTurtle.getscreen()
         turtle_screen.setworldcoordinates(0, 0, maze.shape[1] * cell_size, maze.shape[0] * cell_size)
@@ -157,36 +167,28 @@ class astaralgorithm(tkinter.Frame):
                 self.theTurtle.fillcolor(
                     "black" if maze[row, col] == 1 else "lightgray")
                 self.theTurtle.begin_fill()
-                for _ in range(4):
+                for i in range(4):
                     self.theTurtle.forward(cell_size)
                     self.theTurtle.right(90)
                 self.theTurtle.end_fill()
                 self.theTurtle.penup()
 
-        # for row in range(maze.shape[0]):
-        #     for col in range(maze.shape[1]):
-        #         self.theTurtle.goto(col * cell_size, row * cell_size)
-        #         self.theTurtle.pendown()
-        #         self.theTurtle.setheading(0)
-        #         self.theTurtle.fillcolor("lightgray" if maze[row, col] == 0 else "black")
-        #         self.theTurtle.begin_fill()
-        #         for _ in range(4):
-        #             self.theTurtle.forward(cell_size)
-        #             self.theTurtle.right(90)
-        #         self.theTurtle.end_fill()
-        #         self.theTurtle.penup()
-
         for node in visited_nodes:
             row, col = node
             self.theTurtle.goto(col * cell_size + cell_size // 2, row * cell_size + cell_size // 2)
-            self.theTurtle.dot(cell_size / 4, 'blue')
+            if maze[row, col] == 0:  # If the node is not an obstacle
+                self.theTurtle.dot(cell_size / 4, 'blue')
+            elif maze[row, col] == 1:  # If the node is an obstacle
+                self.theTurtle.dot(cell_size / 4, 'red')  # Change the color as per your requirement
 
         if path:
             path = path[::-1]
             for node in path:
                 row, col = node
-                self.theTurtle.goto(col * cell_size + cell_size // 2, row * cell_size + cell_size // 2)
-                self.theTurtle.dot(cell_size / 4, 'red')
+                if maze[row, col] == 0:  # check if node = black (1) as obstacle and should not be marked red
+                    self.theTurtle.goto(col * cell_size + cell_size // 2, row * cell_size + cell_size // 2)
+                    self.theTurtle.dot(cell_size / 4, 'red')
+
 
         self.theTurtle.goto(cell_size // 2, cell_size // 2)
         self.theTurtle.dot(cell_size / 2, 'green')
@@ -198,6 +200,7 @@ class astaralgorithm(tkinter.Frame):
 
         turtle_screen.update()
 
+newarray.has_run = False
 
 def main():
     root = tkinter.Tk()
